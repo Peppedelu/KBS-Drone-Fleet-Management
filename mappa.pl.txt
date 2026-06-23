@@ -1,0 +1,47 @@
+% --- FATTI: TIPOLOGIA DEI NODI ---
+% Specifichiamo quali nodi sono depositi
+deposito(deposito_alfa).
+deposito(deposito_beta).
+
+
+% Specifichiamo quali nodi sono postazioni di ricarica per droni
+ricarica(ricarica_nord).
+
+
+% Specifichiamo quali nodi sono clienti (punti di consegna)
+cliente(cliente_rossi).
+cliente(cliente_bianchi).
+cliente(cliente_verdi).
+
+
+% --- FATTI: CONNESSI DIRETTI (Archi orientati con distanza) ---
+corridoio_diretto(deposito_alfa, ricarica_nord, 800).
+corridoio_diretto(deposito_alfa, cliente_rossi, 1200).
+corridoio_diretto(ricarica_nord, cliente_bianchi, 900).
+corridoio_diretto(deposito_beta, cliente_verdi, 1500).
+corridoio_diretto(cliente_rossi, cliente_bianchi, 600).
+
+
+% --- REGOLE: BIDIREZIONALITÀ DEI CORRIDOI ---
+% Un corridoio esiste ed ha una determinata distanza sia in un senso che nell'altro.
+corridoio(X, Y, Distanza) :- corridoio_diretto(X, Y, Distanza).
+corridoio(X, Y, Distanza) :- corridoio_diretto(Y, X, Distanza).
+
+
+
+% --- REGOLE: RAGGIUNGIBILITÀ EVITANDO I CICLI INFINITI ---
+
+% Interfaccia principale: X raggiunge Y se esiste un cammino che parte inserendo X nei visitati
+raggiungibile(X, Y) :-
+	connesso_ricorsivo(X, Y, [X]).
+
+% Caso Base: C'è un corridoio diretto tra X e Y (il valore della distanza non ci interessa: '-')
+connesso_ricorsivo(X, Y, _) :-
+	corridoio(X, Y, _).
+
+% Caso Ricorsivo: C'è un corridoio tra X e Z, Z non è mai stato visitato, e da Z si può raggiungere Y
+connesso_ricorsivo(X, Y, Visitati) :-
+	corridoio(X, Z, _),
+	Z \== Y,
+	\+ member(Z, Visitati),
+	connesso_ricorsivo(Z, Y, [Z|Visitati]).
